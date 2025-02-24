@@ -1,17 +1,19 @@
 // /home/aryan/Documents/project/client/src/components/StartConversation.jsx
 
-import React,{useState, useCallback} from 'react';
+import React,{useState, useCallback, useRef, useEffect} from 'react';
 import axios from 'axios';
 import LiveKitElement from './livekit/LiveKitElement';
+import { useUser } from '../../context/UserContext';
 
 const StartConversation = () => {
+  
   const [connectionDetails, updateConnectionDetails] = useState(undefined);
 
   const onConnectButtonClicked = useCallback(async () => {
     const response = await axios.post(import.meta.env.VITE_PUBLIC_CONN_DETAILS_ENDPOINT,
       {
-        room: "myroom",
-        name: "myname",
+        room: "testuser@gmail.com",
+        name: "test_user_name",
       });
     console.log(response.data)
     const connectionDetailsData = response.data;

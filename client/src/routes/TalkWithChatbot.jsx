@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import StartConversation from '../components/chatbot/StartConversation';
-import CallPage from '../components/chatbot/CallPage';
 
 const TalkWithChatbot = () => {
   const [isCallStarted, setIsCallStarted] = useState(false);

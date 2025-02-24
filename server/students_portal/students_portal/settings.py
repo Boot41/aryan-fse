@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,11 +44,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'rest_framework',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -128,3 +135,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Add your frontend URL here
     # Add other allowed origins as needed
 ]
+
+# LiveKit Configuration
+LIVEKIT_API_KEY = os.getenv('LIVEKIT_API_KEY')
+LIVEKIT_API_SECRET = os.getenv('LIVEKIT_API_SECRET')
+LIVEKIT_SERVER_URL = os.getenv('LIVEKIT_SERVER_URL')
