@@ -57,4 +57,16 @@ api.interceptors.response.use(
   }
 );
 
+// Function to get user profile
+export const getUserProfile = async () => {
+  try {
+    const email = localStorage.getItem('userEmail');  // Get email from localStorage
+    const response = await api.get(`api/profile/?email=${email}`);
+    return response.data.profile;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
 export default api;

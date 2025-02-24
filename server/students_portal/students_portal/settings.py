@@ -84,8 +84,12 @@ WSGI_APPLICATION = 'students_portal.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql' if os.getenv('DB_HOST') else 'django.db.backends.sqlite3',
+        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', ''),
     }
 }
 
@@ -132,9 +136,11 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Add your frontend URL here
+    "http://localhost:5173",  # Vite dev server
     # Add other allowed origins as needed
 ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # LiveKit Configuration
 LIVEKIT_API_KEY = os.getenv('LIVEKIT_API_KEY')

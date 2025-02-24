@@ -3,28 +3,25 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    UserViewSet, SubjectViewSet, EnrollmentViewSet, AssessmentViewSet,
-    ChatbotInteractionViewSet, SubjectTeacherViewSet, TeacherStudentMappingViewSet,
-    get_csrf_token, login_view
+    UserViewSet, SubjectViewSet, AssignmentViewSet, StudentAssignmentViewSet,
+    get_csrf_token, login_view, register_view, get_user_assignments, get_user_profile
 )
-from .webrtc import views as webrtc_views
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'subjects', SubjectViewSet)
-router.register(r'enrollments', EnrollmentViewSet)
-router.register(r'assessments', AssessmentViewSet)
-router.register(r'chatbot-interactions', ChatbotInteractionViewSet)
-router.register(r'subject-teachers', SubjectTeacherViewSet)
-router.register(r'teacher-student-mappings', TeacherStudentMappingViewSet)
-from api.webrtc.views import generate_token, room_assignment, create_room
+router.register(r'assignments', AssignmentViewSet)
+router.register(r'student-assignments', StudentAssignmentViewSet)
+
+from api.livekit.views import generate_token, room_assignment, create_room
 urlpatterns = [
-    path('', include(router.urls)),
+    path('assignments/', get_user_assignments, name='get_user_assignments'),  # Custom endpoint
+    path('profile/', get_user_profile, name='get_user_profile'),  # Custom endpoint
+    path('', include(router.urls)),  # Default router URLs
     path('csrf-token/', get_csrf_token, name='csrf-token'),
+    path('register/', register_view, name='register'),
     path('login/', login_view, name='login'),
-    # path('signup/', signup_view, name='signup'),
     path('chat-room-token/', generate_token, name='generate_token'),
     path('room-assignment/', room_assignment, name='room-assignment'),
     path('api/create-room/', create_room, name='create-room'),
-    # path('process-audio/', webrtc_views.process_audio, name='process_audio'),
 ]

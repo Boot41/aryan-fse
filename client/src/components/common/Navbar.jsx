@@ -27,10 +27,10 @@ const Navbar = () => {
               Dashboard
             </Link>
             <Link
-              to="/assessments"
+              to="/assignments"
               className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
             >
-              Assessments
+              Assignments
             </Link>
             <Link
               to="/my-profile"

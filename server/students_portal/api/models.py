@@ -27,6 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
+    password = models.CharField(max_length=255)  # Storing password directly
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -35,18 +36,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     groups = models.ManyToManyField(
         'auth.Group',
-        related_name='custom_user_set',  # Change this line
+        related_name='custom_user_groups',
         blank=True,
-        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
-        verbose_name='groups'
+        help_text='The groups this user belongs to.'
     )
     
     user_permissions = models.ManyToManyField(
         'auth.Permission',
-        related_name='custom_user_permissions_set',  # Change this line
+        related_name='custom_user_permissions',
         blank=True,
-        help_text='Specific permissions for this user.',
-        verbose_name='user permissions'
+        help_text='Specific permissions for this user.'
     )
 
     objects = CustomUserManager()
@@ -57,87 +56,55 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-# Subject model with a course handout field
+    def authenticate(self, password):
+        return self.password == password
+
+# Subject model
 class Subject(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    course_handout = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Full text or URL/path reference for the course handout."
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
-# Enrollment model mapping students to subjects
-class Enrollment(models.Model):
+# Assignment model
+class Assignment(models.Model):
+    ASSIGNMENT_TYPE_CHOICES = [
+        ('general', 'General'),
+        ('special', 'Special'),
+    ]
+    
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='enrollments')
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='enrollments')
-    score = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    enrolled_at = models.DateTimeField(auto_now_add=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='assignments')
+    title = models.CharField(max_length=255)
+    topic = models.CharField(max_length=255)
+    description = models.TextField()
+    questions = models.JSONField(help_text="JSON array of questions related to the topic")
+    assignment_type = models.CharField(max_length=20, choices=ASSIGNMENT_TYPE_CHOICES)
+    duration = models.IntegerField(help_text="Duration of the assignment in minutes", default=60)
+    total_questions = models.IntegerField(help_text="Total number of questions", default=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.name} enrolled in {self.subject.name}"
+        return f"{self.title} - {self.subject.name}"
 
-# Test model storing dynamically generated tests using an LLM
-class Assessment(models.Model):
+# StudentAssignment model for mapping assignments to students
+class StudentAssignment(models.Model):
     id = models.AutoField(primary_key=True)
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tests')
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='tests')
-    teacher = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='assigned_assessments',
-        help_text="Teacher who generated or is assigned the test."
-    )
-    test_data = models.JSONField(help_text="JSON data containing test questions and instructions.")
-    result = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    generated_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Assessment for {self.student.name} in {self.subject.name}"
-
-# ChatbotInteraction model to log conversation between student and chatbot
-class ChatbotInteraction(models.Model):
-    id = models.AutoField(primary_key=True)
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chatbot_interactions')
-    subject = models.ForeignKey(
-        Subject,
-        on_delete=models.CASCADE,
-        related_name='chatbot_interactions',
-        blank=True,
-        null=True,
-        help_text="Optional subject context for the interaction."
-    )
-    message = models.TextField()
-    response = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Interaction by {self.student.name} on {self.timestamp}"
-
-# SubjectTeacher model linking teachers to subjects
-class SubjectTeacher(models.Model):
-    id = models.AutoField(primary_key=True)
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subject_teachers')
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='subject_teachers')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_assignments')
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='student_assignments')
+    status = models.CharField(max_length=20, default='pending', choices=[
+        ('pending', 'Pending'),
+        ('completed', 'Completed')
+    ])
+    submission = models.JSONField(null=True, blank=True, help_text="JSON containing student's answers")
+    score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     assigned_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    graded_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.teacher.name} teaches {self.subject.name}"
-
-# TeacherStudentMapping model assigning students to a teacher for a specific subject
-class TeacherStudentMapping(models.Model):
-    id = models.AutoField(primary_key=True)
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teacher_student_mappings')
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='student_teacher_mappings')
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='teacher_student_mappings')
-    assigned_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.student.name} assigned to {self.teacher.name} for {self.subject.name}"
+        return f"{self.student.name} - {self.assignment.title}"

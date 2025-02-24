@@ -10,7 +10,7 @@ import os
 from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from ..models import Assessment
+from ..models import StudentAssignment
 from django.utils import timezone
 from datetime import timedelta
 
@@ -56,13 +56,13 @@ async def create_room(request):
         if not user_name or not room_name:
             return Response({'error': 'Missing name or room name'}, status=400)
 
-        assessment_details = get_latest_assessment_details(room_name)
-        metadata = "No recent assessments"
+        assignment_details = get_latest_assignment_details(room_name)
+        metadata = "No recent assignments"
         
-        if assessment_details:
-            metadata = f"Subject: {assessment_details['subject']}, Topic: {assessment_details['topic']}"
-            if assessment_details['score'] is not None:
-                metadata += f", Score: {assessment_details['score']:.2f}%"
+        if assignment_details:
+            metadata = f"Subject: {assignment_details['subject']}, Topic: {assignment_details['topic']}"
+            if assignment_details['score'] is not None:
+                metadata += f", Score: {assignment_details['score']:.2f}%"
         print(metadata)
         room = await lkapi.room.create_room(
             CreateRoomRequest(
@@ -106,23 +106,23 @@ ERROR_MESSAGES = {
     'token_generation_failed': 'Failed to generate access token'
 }
 
-def get_latest_assessment_details(email):
+def get_latest_assignment_details(email):
     try:
         thirty_days_ago = timezone.now() - timedelta(days=30)
-        latest_assessment = Assessment.objects.filter(
+        latest_assignment = StudentAssignment.objects.filter(
             student__email=email,
-            generated_at__gte=thirty_days_ago
-        ).order_by('-generated_at').first()
+            assigned_at__gte=thirty_days_ago
+        ).order_by('-assigned_at').first()
 
-        if latest_assessment:
+        if latest_assignment:
             return {
-                'subject': latest_assessment.subject.name,
-                'topic': latest_assessment.test_data.get('topic', 'General'),
-                'score': float(latest_assessment.result) if latest_assessment.result else None
+                'subject': latest_assignment.assignment.subject.name,
+                'topic': latest_assignment.assignment.topic,
+                'score': float(latest_assignment.score) if latest_assignment.score else None
             }
         return None
     except Exception as e:
-        print(f"Error getting latest assessment: {e}")
+        print(f"Error getting latest assignment: {e}")
         return None
 
 @api_view(['POST'])
@@ -134,9 +134,8 @@ def generate_token(request):
         if not user_name or not room_name:
             return Response({'error': 'Missing name or room name'}, status=400)
 
-        assessment_details = get_latest_assessment_details(room_name)
+        assignment_details = get_latest_assignment_details(room_name)
         metadata = "meta data received from client "
-        
         
         print(metadata)
         token = api.AccessToken(api_key, api_secret) \
@@ -151,7 +150,7 @@ def generate_token(request):
         return Response({
             'participantToken': token.to_jwt(),
             'serverUrl': livkit_server_url,
-            'assessmentDetails': assessment_details
+            'assignmentDetails': assignment_details
         })
     except Exception as e:
         print(str(e))
