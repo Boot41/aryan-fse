@@ -271,7 +271,7 @@ def generate_custom_assignment(request):
         topic = data.get('topic')
         subject = data.get('subject')
         student_email = data.get('student_email')
-
+        print(topic, subject, student_email,data)
         if not all([topic, subject, student_email]):
             return JsonResponse({
                 'status': 'error',
@@ -333,6 +333,62 @@ def generate_custom_assignment(request):
             'status': 'error',
             'message': 'Invalid JSON data'
         }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@csrf_exempt
+def get_subjects_and_topics(request):
+    if request.method != 'GET':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Only GET method is allowed'
+        }, status=405)
+
+    try:
+        # Get all subjects
+        subjects = Subject.objects.all()
+        
+        # Create a dictionary to store subjects and their topics
+        subjects_data = {}
+        
+        for subject in subjects:
+            # Get assignments for this subject
+            assignments = Assignment.objects.filter(subject=subject)
+            
+            # Extract topics from assignments
+            topics = set()  # Using set to avoid duplicates
+            for assignment in assignments:
+                # Add title words as potential topics (excluding common words)
+                words = assignment.title.lower().split()
+                topics.update([word for word in words if len(word) > 3])  # Only words longer than 3 chars
+                
+                # Add description words as potential topics
+                if assignment.description:
+                    desc_words = assignment.description.lower().split()
+                    topics.update([word for word in desc_words if len(word) > 3])
+            
+            # Add some default topics if none found
+            if not topics and subject.name.lower() == 'advanced mathematics':
+                topics = {'calculus', 'algebra', 'statistics', 'trigonometry', 'probability'}
+            elif not topics and subject.name.lower() == 'physics':
+                topics = {'mechanics', 'thermodynamics', 'electromagnetism', 'optics', 'quantum'}
+            elif not topics and 'computer' in subject.name.lower():
+                topics = {'algorithms', 'programming', 'databases', 'networking', 'security'}
+            
+            # Convert set to sorted list for JSON serialization
+            subjects_data[subject.name] = {
+                'description': subject.description,
+                'topics': sorted(list(topics))
+            }
+        
+        return JsonResponse({
+            'status': 'success',
+            'data': subjects_data
+        })
+        
     except Exception as e:
         return JsonResponse({
             'status': 'error',

@@ -130,18 +130,22 @@ def generate_token(request):
     try:
         user_name = request.data.get('name')
         room_name = request.data.get('room')
-
+        subject = request.data.get('subject')
+        topic = request.data.get('topic')
         if not user_name or not room_name:
             return Response({'error': 'Missing name or room name'}, status=400)
 
         assignment_details = get_latest_assignment_details(room_name)
-        metadata = "meta data received from client "
+        json_data = json.dumps({
+            'subject': subject,
+            'topic': topic
+        }) 
+        print(json_data)
         
-        print(metadata)
         token = api.AccessToken(api_key, api_secret) \
             .with_identity(user_name) \
             .with_name(user_name) \
-            .with_metadata(metadata)\
+            .with_metadata(json_data)\
             .with_grants(api.VideoGrants(
                 room_join=True,
                 room=room_name,

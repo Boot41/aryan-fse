@@ -69,22 +69,10 @@ function Dashboard() {
             Take Assessment
           </Link>
           <Link
-            to="/create-assessment"
-            className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white py-4 px-6 rounded-lg shadow-md hover:from-purple-800 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 transition-all duration-200 text-center"
-          >
-            Create Assessment
-          </Link>
-          <Link
             to="/chatbot"
             className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white py-4 px-6 rounded-lg shadow-md hover:from-purple-800 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 transition-all duration-200 text-center"
           >
             Talk with Chatbot
-          </Link>
-          <Link
-            to="/scheduled-assessments"
-            className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white py-4 px-6 rounded-lg shadow-md hover:from-purple-800 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 transition-all duration-200 text-center"
-          >
-            Scheduled Assessments
           </Link>
           <Link
             to="/my-profile"

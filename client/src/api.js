@@ -100,3 +100,18 @@ export const getAssignmentQuestions = async (assignmentId) => {
     throw error;
   }
 };
+
+export const getSubjectsAndTopics = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/subjects-and-topics/`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch subjects and topics');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};

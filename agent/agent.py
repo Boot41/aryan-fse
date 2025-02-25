@@ -134,16 +134,6 @@ def prewarm(proc: JobProcess):
 
 
 async def entrypoint(ctx: JobContext):
-    initial_ctx = llm.ChatContext().append(
-        role="system",
-        text=(
-            """You are a voice assistant created for helping students with topics they are struggling with. Your interface with users will be voice. 
-            You should use short and concise responses, and avoiding usage of unpronouncable punctuation. 
-            The current subject is maths and the current topic is addition.
-            Strictly provide answers to the question regarding this context only if user asks anything else just say "I can't provide you any information on that".
-            """
-        ),
-    )
 
     logger.info(f"connecting to room {ctx.room.name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
@@ -151,6 +141,25 @@ async def entrypoint(ctx: JobContext):
     # wait for the first participant to connect
     participant = await ctx.wait_for_participant()
     metadata = participant.metadata
+    # print("before parsing -------------------------",metadata)
+    metadata = json.loads(metadata)
+    # print("after parsing -------------------------",metadata)
+    subject = metadata.get("subject")
+    topic = metadata.get("topic")
+    # print("subject -------------------------",subject)
+    # print("topic -------------------------",topic)
+    initial_ctx = llm.ChatContext().append(
+        role="system",
+        text=(
+            f"""You are a voice assistant created for helping students with topics they are struggling with. Your interface with users will be voice. 
+            You should use short and concise responses, and avoiding usage of unpronouncable punctuation. 
+            The current subject is {subject} and the current topic is {topic}.
+            After explaining the current topic to the user ask them if they want to create an assignment for themselves.
+            If the user says yes, ask them to confirm by saying "yes, I want to create an assignment" or "no, I don't want to create an assignment".
+            Strictly provide answers to the question regarding this context only if user asks anything else just say "I can't provide you any information on that".
+            """
+        ),
+    )
     logger.info(f"metadata : {metadata}")
     logger.info(f"starting voice assistant for participant {participant.identity}")
 

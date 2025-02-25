@@ -8,11 +8,14 @@ import { NoAgentNotification } from "./NoAgentNotification";
 import SimpleVoiceAssistant from "./SimpleVoiceAssistant";
 import { useEffect, useState } from "react";
 
+const API_BASE_URL = 'http://localhost:8000/api';
+
 function check_confirm_assignment(){
     const transcripts = JSON.parse(localStorage.getItem('recived_transcriptions'));
     if(transcripts){
       for (var j=0; j<transcripts.length; j++) {
-          if (transcripts[j].match("yescreateanassignment")) return true;
+          if(transcripts[j].match("noidontwanttocreateanassignment"))return false;
+          else if (transcripts[j].match("yescreateanassignment")) return true;
       }
       return false;
     }
@@ -20,14 +23,14 @@ function check_confirm_assignment(){
 
 async function generateAssignment(user_email, subject, topic) {
   try {
-    const response = await fetch('/api/assignments/generate/', {
+    const response = await fetch(`${API_BASE_URL}/generate-custom-assignment/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
       },
       body: JSON.stringify({
-        user_email,
+        student_email:user_email,
         subject,
         topic
       })
@@ -46,7 +49,7 @@ async function generateAssignment(user_email, subject, topic) {
   }
 }
 
-export default function LiveKitElement({connectionDetails,updateConnectionDetails}) {
+export default function LiveKitElement({connectionDetails,updateConnectionDetails,conversationParams}) {
   const [agentState, setAgentState] = useState("disconnected");
   
   const disconnectHandler = async () => {
@@ -54,8 +57,7 @@ export default function LiveKitElement({connectionDetails,updateConnectionDetail
     const user_confirmed_assignment = check_confirm_assignment();
     
     if(user_confirmed_assignment){
-      const user_email = JSON.parse(localStorage.getItem('user_email'));
-      const conversationParams = JSON.parse(localStorage.getItem('current_conversation_params'));
+      const user_email = localStorage.getItem('userEmail');
       await generateAssignment(user_email, conversationParams.subject, conversationParams.topic);
     }
     // here we will call a backed function that will create an assignment for the logged in user 
