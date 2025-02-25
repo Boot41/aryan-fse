@@ -110,9 +110,32 @@ class Command(BaseCommand):
                 'title': 'Linear Algebra Problem Set',
                 'description': 'Solve problems related to vector spaces and linear transformations',
                 'questions': json.dumps([
-                    {'question': 'Define vector space', 'points': 10},
-                    {'question': 'Prove that the set of all polynomials is a vector space', 'points': 20},
-                    {'question': 'Find the eigenvalues of a given matrix', 'points': 20}
+                    {
+                        'id': 1,
+                        'question': 'Which of the following is a property of vector spaces?',
+                        'options': [
+                            'Closure under multiplication only',
+                            'Closure under addition and multiplication',
+                            'No identity element',
+                            'No inverse elements'
+                        ],
+                        'correctAnswer': 'Closure under addition and multiplication',
+                        'points': 10
+                    },
+                    {
+                        'id': 2,
+                        'question': 'What is the rank of a 3x3 identity matrix?',
+                        'options': ['1', '2', '3', '4'],
+                        'correctAnswer': '3',
+                        'points': 20
+                    },
+                    {
+                        'id': 3,
+                        'question': 'If a matrix has eigenvalues 2, 3, and 5, what is its trace?',
+                        'options': ['6', '8', '10', '30'],
+                        'correctAnswer': '10',
+                        'points': 20
+                    }
                 ]),
                 'duration': 90,  # 1.5 hours
                 'total_questions': 3
@@ -121,9 +144,42 @@ class Command(BaseCommand):
                 'title': 'Database Design Project',
                 'description': 'Design a database schema for a university management system',
                 'questions': json.dumps([
-                    {'question': 'Identify the main entities', 'points': 10},
-                    {'question': 'Create an ER diagram', 'points': 20},
-                    {'question': 'Implement the schema in SQL', 'points': 30}
+                    {
+                        'id': 1,
+                        'question': 'Which relationship type represents "A student can enroll in many courses and a course can have many students"?',
+                        'options': [
+                            'One-to-One',
+                            'One-to-Many',
+                            'Many-to-Many',
+                            'None of the above'
+                        ],
+                        'correctAnswer': 'Many-to-Many',
+                        'points': 10
+                    },
+                    {
+                        'id': 2,
+                        'question': 'What is normalization in database design?',
+                        'options': [
+                            'Process of creating tables',
+                            'Process of organizing data to reduce redundancy',
+                            'Process of adding more data',
+                            'Process of deleting data'
+                        ],
+                        'correctAnswer': 'Process of organizing data to reduce redundancy',
+                        'points': 20
+                    },
+                    {
+                        'id': 3,
+                        'question': 'Which SQL statement is used to create a new table?',
+                        'options': [
+                            'NEW TABLE',
+                            'CREATE TABLE',
+                            'ADD TABLE',
+                            'INSERT TABLE'
+                        ],
+                        'correctAnswer': 'CREATE TABLE',
+                        'points': 30
+                    }
                 ]),
                 'duration': 120,  # 2 hours
                 'total_questions': 3
@@ -132,9 +188,42 @@ class Command(BaseCommand):
                 'title': 'Physics Lab Report',
                 'description': 'Write a report on the pendulum experiment',
                 'questions': json.dumps([
-                    {'question': 'Describe the experimental setup', 'points': 10},
-                    {'question': 'Analyze the results', 'points': 20},
-                    {'question': 'Discuss sources of error', 'points': 10}
+                    {
+                        'id': 1,
+                        'question': 'What affects the period of a simple pendulum?',
+                        'options': [
+                            'Mass of the bob',
+                            'Length of the string',
+                            'Initial displacement',
+                            'Color of the bob'
+                        ],
+                        'correctAnswer': 'Length of the string',
+                        'points': 10
+                    },
+                    {
+                        'id': 2,
+                        'question': 'The period of a pendulum is doubled. What happened to its length?',
+                        'options': [
+                            'Doubled',
+                            'Quadrupled',
+                            'Halved',
+                            'Remained the same'
+                        ],
+                        'correctAnswer': 'Quadrupled',
+                        'points': 20
+                    },
+                    {
+                        'id': 3,
+                        'question': 'Which force is responsible for the pendulum\'s motion?',
+                        'options': [
+                            'Electric force',
+                            'Magnetic force',
+                            'Gravitational force',
+                            'Nuclear force'
+                        ],
+                        'correctAnswer': 'Gravitational force',
+                        'points': 10
+                    }
                 ]),
                 'duration': 60,  # 1 hour
                 'total_questions': 3

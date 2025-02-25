@@ -1,35 +1,41 @@
 // /home/aryan/Documents/project/client/src/routes/TakeAssessment.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AssessmentQuestion from '../components/assessments/AssessmentQuestion';
+import { getAssignmentQuestions, takeAssignment } from '../api';
 
 const TakeAssessment = () => {
-  // Sample assessment data for development
-  const [assessment] = useState({
-    title: 'Mathematics Quiz',
-    questions: [
-      {
-        id: 1,
-        question: 'What is 2 + 2?',
-        options: ['3', '4', '5', '6'],
-        correctAnswer: '4',
-      },
-      {
-        id: 2,
-        question: 'What is the square root of 16?',
-        options: ['2', '3', '4', '5'],
-        correctAnswer: '4',
-      },
-      {
-        id: 3,
-        question: 'What is 10 / 2?',
-        options: ['2', '3', '4', '5'],
-        correctAnswer: '5',
-      },
-    ],
-  });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const assignmentId = location.state?.assignmentId;
 
+  const [assessment, setAssessment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [answers, setAnswers] = useState({});
+
+  useEffect(() => {
+    const fetchAssignment = async () => {
+      if (!assignmentId) {
+        setError('No assignment selected');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getAssignmentQuestions(assignmentId);
+        console.log(JSON.parse(data.questions))
+        setAssessment(JSON.parse(data.questions));
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssignment();
+  }, [assignmentId]);
 
   const handleAnswerChange = (questionId, selectedOption) => {
     setAnswers((prevAnswers) => ({
@@ -38,16 +44,63 @@ const TakeAssessment = () => {
     }));
   };
 
-  const handleSubmit = () => {
-    // TODO: Submit answers to the backend
-    console.log('Submitted Answers:', answers);
+  const handleSubmit = async () => {
+    if (!assignmentId) {
+      setError('No assignment selected');
+      return;
+    }
+
+    try {
+      const studentEmail = localStorage.getItem('userEmail');
+      // Calculate score based on correct answers
+      const totalQuestions = assessment.questions.length;
+      const correctAnswers = assessment.questions.filter(
+        q => answers[q.id] === q.correctAnswer
+      ).length;
+      const score = (correctAnswers / totalQuestions) * 100;
+
+      await takeAssignment({
+        student_email: studentEmail,
+        assignment_id: assignmentId,
+        score: score
+      });
+
+      // Navigate back to assignments page after submission
+      navigate('/assignments');
+    } catch (error) {
+      setError(error.message);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
+        <div className="text-4xl font-bold text-center text-white">Loading assessment...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
+        <div className="text-4xl font-bold text-center text-red-500">{error}</div>
+      </div>
+    );
+  }
+
+  if (!assessment) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
+        <div className="text-4xl font-bold text-center text-white">No assessment found</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
       <h2 className="text-4xl font-bold text-center text-white mb-8">{assessment.title}</h2>
       <div className="max-w-2xl mx-auto space-y-6">
-        {assessment.questions.map((question) => (
+        {assessment?.map((question) => (
           <AssessmentQuestion
             key={question.id}
             question={question}

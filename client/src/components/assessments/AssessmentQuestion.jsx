@@ -3,6 +3,7 @@
 import React from 'react';
 
 const AssessmentQuestion = ({ question, selectedAnswer, onAnswerChange }) => {
+  console.log(question)
   return (
     <div className="bg-gray-800/70 backdrop-blur-sm p-6 rounded-lg shadow-2xl border border-gray-700/30">
       <h3 className="text-xl font-semibold text-white mb-4">{question.question}</h3>

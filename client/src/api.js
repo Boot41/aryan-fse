@@ -64,3 +64,39 @@ export const getUserAssignments = async () => {
     throw error;
   }
 };
+
+export const takeAssignment = async (assignmentData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/take_assignment/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(assignmentData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to take assignment');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAssignmentQuestions = async (assignmentId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch assignment questions');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+};

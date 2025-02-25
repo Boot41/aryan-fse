@@ -4,12 +4,62 @@ import {
   VoiceAssistantControlBar,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { useState } from "react";
 import { NoAgentNotification } from "./NoAgentNotification";
 import SimpleVoiceAssistant from "./SimpleVoiceAssistant";
+import { useEffect, useState } from "react";
+
+function check_confirm_assignment(){
+    const transcripts = JSON.parse(localStorage.getItem('recived_transcriptions'));
+    if(transcripts){
+      for (var j=0; j<transcripts.length; j++) {
+          if (transcripts[j].match("yescreateanassignment")) return true;
+      }
+      return false;
+    }
+}
+
+async function generateAssignment(user_email, subject, topic) {
+  try {
+    const response = await fetch('/api/assignments/generate/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      },
+      body: JSON.stringify({
+        user_email,
+        subject,
+        topic
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate assignment');
+    }
+
+    const data = await response.json();
+    console.log('Assignment generated:', data);
+    return data;
+  } catch (error) {
+    console.error('Error generating assignment:', error);
+    return null;
+  }
+}
 
 export default function LiveKitElement({connectionDetails,updateConnectionDetails}) {
   const [agentState, setAgentState] = useState("disconnected");
+  
+  const disconnectHandler = async () => {
+    updateConnectionDetails(undefined);
+    const user_confirmed_assignment = check_confirm_assignment();
+    
+    if(user_confirmed_assignment){
+      const user_email = JSON.parse(localStorage.getItem('user_email'));
+      const conversationParams = JSON.parse(localStorage.getItem('current_conversation_params'));
+      await generateAssignment(user_email, conversationParams.subject, conversationParams.topic);
+    }
+    // here we will call a backed function that will create an assignment for the logged in user 
+  };
   return (
     <div
       data-lk-theme="default"
@@ -22,9 +72,7 @@ export default function LiveKitElement({connectionDetails,updateConnectionDetail
         audio={true}
         video={false}
         onMediaDeviceFailure={onDeviceFailure}
-        onDisconnected={() => {
-          updateConnectionDetails(undefined);
-        }}
+        onDisconnected={disconnectHandler}
         className="grid grid-rows-[2fr_1fr] items-center"
       >
         <SimpleVoiceAssistant onStateChange={setAgentState} />

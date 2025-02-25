@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom';
 const AssignmentCard = ({ assignment }) => {
   const navigate = useNavigate();
 
-  console.log(assignment)
+  // console.log(assignment)
   const handleStartAssessment = () => {
-    navigate('/take-assessment'); // Navigate to the TakeAssessment page
+    navigate('/take-assessment', { state: { assignmentId: assignment.id } }); // Pass assignment ID to the TakeAssessment page
   };
 
   return (

@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import json
 from .models import User, Subject, Assignment, StudentAssignment
 from .serializers import UserSerializer, SubjectSerializer, AssignmentSerializer, StudentAssignmentSerializer
+from django.utils import timezone
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -187,3 +188,153 @@ def get_user_profile(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def take_assignment(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            student_email = data.get('student_email')
+            assignment_id = data.get('assignment_id')
+            score = data.get('score')
+
+            if not all([student_email, assignment_id, score]):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'student_email, assignment_id and score are required'
+                }, status=400)
+
+            # Get the student and assignment
+            student = User.objects.filter(email=student_email).first()
+            assignment = Assignment.objects.filter(id=assignment_id).first()
+
+            if not student or not assignment:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Student or Assignment not found'
+                }, status=404)
+
+            # Create or update the student assignment
+            student_assignment, created = StudentAssignment.objects.get_or_create(
+                student=student,
+                assignment=assignment,
+                defaults={
+                    'status': 'completed',
+                    'score': score,
+                    'submitted_at': timezone.now(),
+                    'graded_at': timezone.now()
+                }
+            )
+
+            if not created:
+                student_assignment.status = 'completed'
+                student_assignment.score = score
+                student_assignment.submitted_at = timezone.now()
+                student_assignment.graded_at = timezone.now()
+                student_assignment.save()
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Assignment score saved successfully',
+                'data': {
+                    'student_assignment_id': student_assignment.id,
+                    'score': student_assignment.score
+                }
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid JSON data'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Method not allowed'
+    }, status=405)
+
+@csrf_exempt
+def generate_custom_assignment(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Only POST method is allowed'
+        }, status=405)
+
+    try:
+        data = json.loads(request.body)
+        topic = data.get('topic')
+        subject = data.get('subject')
+        student_email = data.get('student_email')
+
+        if not all([topic, subject, student_email]):
+            return JsonResponse({
+                'status': 'error',
+                'message': 'topic, subject, and student_email are required'
+            }, status=400)
+
+        # Get the student
+        student = User.objects.filter(email=student_email).first()
+        if not student:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Student not found'
+            }, status=404)
+
+        try:
+            from .utils.llm_utils import generate_assignment_questions
+            assignment_data = generate_assignment_questions(topic, subject)
+
+            # Create a new assignment
+            subject_obj, _ = Subject.objects.get_or_create(
+                name=subject,
+                defaults={'description': f'Subject for {subject} assignments'}
+            )
+
+            assignment = Assignment.objects.create(
+                title=assignment_data['title'],
+                description=f'Custom generated assignment for {topic} in {subject}',
+                questions=json.dumps(assignment_data['questions']),
+                subject=subject_obj,
+                duration=30,  # Default 30 minutes
+                total_questions=len(assignment_data['questions'])
+            )
+
+            # Create a student assignment
+            StudentAssignment.objects.create(
+                student=student,
+                assignment=assignment,
+                status='pending'
+            )
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Custom assignment generated successfully',
+                'data': {
+                    'assignment_id': assignment.id,
+                    'title': assignment.title,
+                    'description': assignment.description
+                }
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error generating assignment: {str(e)}'
+            }, status=500)
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
